@@ -55,7 +55,7 @@ public class SABrowserActivity extends Activity
 				Element a = (Element)nl.item(i);
 				Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
 
-				if(a.getAttribute("class") == "forum") {
+				if(a.getAttribute("class").equals("forum")) {
 					out = out + a.getFirstChild().getNodeName() + "\n";
 				}
 				
