@@ -48,11 +48,22 @@ public class SABrowserActivity extends Activity
 
 			Log.d(TAG, "DOM Parsed printing results");
 
-			int len = dom.getElementsByTagName("a").getLength();
+			NodeList nl = dom.getElementsByTagName("a");
+			String out = "";
+			for(int i = 0; i < nl.getLength(); ++i)
+			{
+				Element a = (Element)nl.item(i);
+				Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
+
+				if(a.getAttribute("class") == "forum") {
+					out = out + a.getFirstChild().getNodeName() + "\n";
+				}
+				
+			}
 
 
 			TextView tx = (TextView)findViewById(R.id.output);
-			tx.setText(Integer.toString(len));
+			tx.setText(out);
 		} catch (DOMException e) {
 			e.printStackTrace();
 		} catch (ClientProtocolException e) {
