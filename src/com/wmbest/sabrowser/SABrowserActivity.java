@@ -14,6 +14,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import android.util.Log;
+import org.w3c.tidy.*;
+import org.w3c.dom.*;
 
 public class SABrowserActivity extends Activity
 {
@@ -32,17 +34,27 @@ public class SABrowserActivity extends Activity
 		try {
 
 			DefaultHttpClient client = new DefaultHttpClient();
-			URI uri = new URI("http://www.google.com/");
+			URI uri = new URI("http://forums.somethingawful.com/");
 			HttpGet method = new HttpGet(uri);
 			HttpResponse res = client.execute(method);
 			Log.d(TAG, "Created Objects, Now Creating Stream");
 			InputStream data = res.getEntity().getContent();
-			websiteData = generateString(data);
 
-			Log.d(TAG, "Generated String: " + websiteData);
+			Log.d(TAG, "Create Tidy");
+			Tidy tidy = new Tidy();
+			Log.d(TAG, "Parse DOM");
+
+			Document dom = tidy.parseDOM(data, null);
+
+			Log.d(TAG, "DOM Parsed printing results");
+
+			int len = dom.getElementsByTagName("a").getLength();
+
 
 			TextView tx = (TextView)findViewById(R.id.output);
-			tx.setText(websiteData);
+			tx.setText(Integer.toString(len));
+		} catch (DOMException e) {
+			e.printStackTrace();
 		} catch (ClientProtocolException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -51,23 +63,5 @@ public class SABrowserActivity extends Activity
 			e.printStackTrace();
 		}
     }
-
-	public String generateString(InputStream stream) {
-		Log.d(TAG, "generateString");
-		InputStreamReader reader = new InputStreamReader(stream);
-		BufferedReader buffer = new BufferedReader(reader);
-		StringBuilder sb = new StringBuilder();
-
-		try {
-			String cur;
-			while ((cur = buffer.readLine()) != null) {
-				sb.append(cur + "\n");
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return sb.toString();
-	}
 
 }
