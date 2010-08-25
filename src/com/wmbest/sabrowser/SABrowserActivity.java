@@ -56,7 +56,7 @@ public class SABrowserActivity extends Activity
 				Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
 
 				if(a.getAttribute("class").equals("forum")) {
-					out = out + a.getFirstChild().getNodeName() + "\n";
+					out = out + ((Text)a.getFirstChild()).getData() + "\n";
 				}
 				
 			}
