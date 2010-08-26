@@ -9,9 +9,12 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.content.Context;
 import android.widget.BaseAdapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.*;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.content.Intent;
 import org.apache.http.impl.client.DefaultHttpClient;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -58,6 +61,14 @@ public class SABrowserActivity extends Activity
                 switch(aMessage.what) {
                     case FORUM_LIST_RETURNED:
                         mForumList.setAdapter(new ForumsListAdapter(SABrowserActivity.this, mForumTitleList));
+						mForumList.setOnItemClickListener( new OnItemClickListener() {
+							@Override
+							public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+								Intent intent = new Intent(SABrowserActivity.this, ThreadActivity.class);
+								intent.putExtra("url", ((SAForum)parent.getAdapter().getItem(position)).url);
+								SABrowserActivity.this.startActivity(intent);
+							}
+						});
                         break;
                     case ERROR:
                         Log.e(TAG, "ERRORRRRR");
@@ -97,6 +108,7 @@ public class SABrowserActivity extends Activity
 
         public int getCount() {
             return mItems.size();
+			
         }
 
         public Object getItem(int aPosition) {

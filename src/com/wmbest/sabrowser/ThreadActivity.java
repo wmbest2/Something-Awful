@@ -130,7 +130,8 @@ public class ThreadActivity extends Activity
 
             try {
                 DefaultHttpClient client = new DefaultHttpClient();
-                URI uri = new URI(url);
+				Log.d(TAG, url);
+                URI uri = new URI("http://forums.somethingawful.com/" + url);
                 HttpGet method = new HttpGet(uri);
                 HttpResponse res = client.execute(method);
                 Log.d(TAG, "Created Objects, Now Creating Stream");
