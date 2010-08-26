@@ -157,7 +157,7 @@ public class SABrowserActivity extends Activity
                 for(int i = 0; i < nl.getLength(); ++i)
                 {
                     Element a = (Element)nl.item(i);
-                    Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
+                    //Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
 
                     if(a.getAttribute("class").equals("forum")) {
                         mForumTitleList.add(new SAForum(((Text)a.getFirstChild()).getData(), a.getAttribute("href")));

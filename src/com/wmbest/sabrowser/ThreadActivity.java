@@ -150,7 +150,7 @@ public class ThreadActivity extends Activity
                 for(int i = 0; i < nl.getLength(); ++i)
                 {
                     Element a = (Element)nl.item(i);
-                    Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
+                    //Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
 
                     if(a.getAttribute("class").equals("thread_title")) {
                         mThreadTitleList.add(((Text)a.getFirstChild()).getData());
