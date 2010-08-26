@@ -23,8 +23,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import android.util.Log;
-import org.w3c.tidy.*;
 import org.w3c.dom.*;
+import org.htmlcleaner.*;
 
 import java.util.ArrayList;
 
@@ -138,11 +138,15 @@ public class ThreadActivity extends Activity
                 InputStream data = res.getEntity().getContent();
 
                 Log.d(TAG, "Create Tidy");
-                Tidy tidy = new Tidy();
+				HtmlCleaner hc = new HtmlCleaner();
+
+				CleanerProperties props = hc.getProperties();
+
+				DomSerializer ds = new DomSerializer(props, true);
+								
                 Log.d(TAG, "Parse DOM");
 
-                Document dom = tidy.parseDOM(data, null);
-
+                Document dom = ds.createDOM(hc.clean(data));
                 Log.d(TAG, "DOM Parsed printing results");
 
                 NodeList nl = dom.getElementsByTagName("a");
