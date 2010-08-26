@@ -28,17 +28,18 @@ import org.w3c.dom.*;
 
 import java.util.ArrayList;
 
-public class SABrowserActivity extends Activity
+public class ThreadActivity extends Activity
 {
 
-	private static final String TAG = "SABrowserActivity";
-    private static final int FORUM_LIST_RETURNED = 1;
+	private static final String TAG = "ThreadActivity";
+    private static final int THREAD_LIST_RETURNED = 1;
     private static final int ERROR = -1;
 
-    private ArrayList<SAForum> mForumTitleList;
+    private ArrayList<String> mThreadTitleList;
     private Handler mHandler;
     private ListView mForumList;
     private ProgressDialog mLoadingDialog;
+	private String url;
 
     /** Called when the activity is first created. */
     @Override
@@ -48,16 +49,19 @@ public class SABrowserActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
+
+		url = getIntent().getStringExtra("url");
+
         mForumList = (ListView) findViewById(R.id.forum_list);
-        mForumTitleList = new ArrayList<SAForum>();
+        mThreadTitleList = new ArrayList<String>();
 
         mHandler = new Handler() {
             public void handleMessage(Message aMessage) {
                 mLoadingDialog.dismiss();
 
                 switch(aMessage.what) {
-                    case FORUM_LIST_RETURNED:
-                        mForumList.setAdapter(new ForumsListAdapter(SABrowserActivity.this, mForumTitleList));
+                    case THREAD_LIST_RETURNED:
+                        mForumList.setAdapter(new ThreadListAdapter(ThreadActivity.this, mThreadTitleList));
                         break;
                     case ERROR:
                         Log.e(TAG, "ERRORRRRR");
@@ -66,15 +70,15 @@ public class SABrowserActivity extends Activity
             }
         };
 
-        mLoadingDialog = ProgressDialog.show(SABrowserActivity.this, "Loading", "Fetching list of forums...", true);
+        mLoadingDialog = ProgressDialog.show(ThreadActivity.this, "Loading", "Fetching Threads...", true);
         new PreloadThread(mHandler).start();
     }
 
-    private class ForumsListAdapter extends BaseAdapter {
-        private ArrayList<SAForum> mItems;
+    private class ThreadListAdapter extends BaseAdapter {
+        private ArrayList<String> mItems;
         private LayoutInflater mInflater;
 
-        public ForumsListAdapter(Context aContext, ArrayList<SAForum> aItems) {
+        public ThreadListAdapter(Context aContext, ArrayList<String> aItems) {
             mItems = aItems;
             mInflater = LayoutInflater.from(aContext);
         }
@@ -84,13 +88,13 @@ public class SABrowserActivity extends Activity
 
             // Recycle old View's if the list is long
             if (aConvertView == null) {
-                forumItem = mInflater.inflate(R.layout.forum_list_item, null);
+                forumItem = mInflater.inflate(R.layout.thread_list_item, null);
             } else {
                 forumItem = aConvertView;
             }
 
-            TextView title = (TextView) forumItem.findViewById(R.id.forum_name);
-            title.setText(mItems.get(aPosition).title);
+            TextView title = (TextView) forumItem.findViewById(R.id.thread_name);
+            title.setText(mItems.get(aPosition));
 
             return forumItem;
         }
@@ -126,7 +130,7 @@ public class SABrowserActivity extends Activity
 
             try {
                 DefaultHttpClient client = new DefaultHttpClient();
-                URI uri = new URI("http://forums.somethingawful.com/");
+                URI uri = new URI(url);
                 HttpGet method = new HttpGet(uri);
                 HttpResponse res = client.execute(method);
                 Log.d(TAG, "Created Objects, Now Creating Stream");
@@ -147,12 +151,12 @@ public class SABrowserActivity extends Activity
                     Element a = (Element)nl.item(i);
                     Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
 
-                    if(a.getAttribute("class").equals("forum")) {
-                        mForumTitleList.add(new SAForum(((Text)a.getFirstChild()).getData(), a.getAttribute("href")));
+                    if(a.getAttribute("class").equals("thread_title")) {
+                        mThreadTitleList.add(((Text)a.getFirstChild()).getData());
                     }
                 }
 
-                msgResponse.what = FORUM_LIST_RETURNED;
+                msgResponse.what = THREAD_LIST_RETURNED;
 
             } catch (DOMException e) {
                 e.printStackTrace();
