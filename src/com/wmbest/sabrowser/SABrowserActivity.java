@@ -67,7 +67,6 @@ public class SABrowserActivity extends Activity
         };
 
         mLoadingDialog = ProgressDialog.show(SABrowserActivity.this, "Loading", "Fetching list of forums...", true);
-        // mHandler.post(fetchForumsList);
         new PreloadThread(mHandler).start();
     }
 
@@ -108,65 +107,6 @@ public class SABrowserActivity extends Activity
             return aPosition;
         }
     }
-
-    private Runnable fetchForumsList = new Runnable() {
-        public void run() {
-
-            Message msgResponse = Message.obtain();
-            msgResponse.setTarget(mHandler);
-
-            String websiteData = null;
-
-            try {
-                DefaultHttpClient client = new DefaultHttpClient();
-                URI uri = new URI("http://forums.somethingawful.com/");
-                HttpGet method = new HttpGet(uri);
-                HttpResponse res = client.execute(method);
-                Log.d(TAG, "Created Objects, Now Creating Stream");
-                InputStream data = res.getEntity().getContent();
-
-                Log.d(TAG, "Create Tidy");
-                Tidy tidy = new Tidy();
-                Log.d(TAG, "Parse DOM");
-
-                Document dom = tidy.parseDOM(data, null);
-
-                Log.d(TAG, "DOM Parsed printing results");
-
-                NodeList nl = dom.getElementsByTagName("a");
-
-                for(int i = 0; i < nl.getLength(); ++i)
-                {
-                    Element a = (Element)nl.item(i);
-                    Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
-
-                    if(a.getAttribute("class").equals("forum")) {
-                        mForumTitleList.add(((Text)a.getFirstChild()).getData());
-                    }
-                }
-
-                msgResponse.what = FORUM_LIST_RETURNED;
-
-            } catch (DOMException e) {
-                e.printStackTrace();
-                msgResponse.what = ERROR;
-            } catch (ClientProtocolException e) {
-                e.printStackTrace();
-                msgResponse.what = ERROR;
-            } catch (IOException e) {
-                e.printStackTrace();
-                msgResponse.what = ERROR;
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                msgResponse.what = ERROR;
-            } catch (Exception e) {
-                Log.i(TAG, e.toString());
-                msgResponse.what = ERROR;
-            }
-
-            msgResponse.sendToTarget();
-        }
-    };
 
     private class PreloadThread extends Thread {
 
