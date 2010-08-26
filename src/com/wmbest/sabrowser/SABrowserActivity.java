@@ -1,7 +1,10 @@
 package com.wmbest.sabrowser;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.content.Context;
@@ -29,9 +32,13 @@ public class SABrowserActivity extends Activity
 {
 
 	private static final String TAG = "SABrowserActivity";
+    private static final int FORUM_LIST_RETURNED = 1;
+    private static final int ERROR = -1;
 
-    private ListView mForumList;
     private ArrayList<String> mForumTitleList;
+    private Handler mHandler;
+    private ListView mForumList;
+    private ProgressDialog mLoadingDialog;
 
     /** Called when the activity is first created. */
     @Override
@@ -44,47 +51,24 @@ public class SABrowserActivity extends Activity
         mForumList = (ListView) findViewById(R.id.forum_list);
         mForumTitleList = new ArrayList<String>();
 
-		String websiteData = null;
+        mHandler = new Handler() {
+            public void handleMessage(Message aMessage) {
+                mLoadingDialog.dismiss();
 
-		try {
+                switch(aMessage.what) {
+                    case FORUM_LIST_RETURNED:
+                        mForumList.setAdapter(new ForumsListAdapter(SABrowserActivity.this, mForumTitleList));
+                        break;
+                    case ERROR:
+                        Log.e(TAG, "ERRORRRRR");
+                        break;
+                }
+            }
+        };
 
-			DefaultHttpClient client = new DefaultHttpClient();
-			URI uri = new URI("http://forums.somethingawful.com/");
-			HttpGet method = new HttpGet(uri);
-			HttpResponse res = client.execute(method);
-			Log.d(TAG, "Created Objects, Now Creating Stream");
-			InputStream data = res.getEntity().getContent();
-
-			Log.d(TAG, "Create Tidy");
-			Tidy tidy = new Tidy();
-			Log.d(TAG, "Parse DOM");
-
-			Document dom = tidy.parseDOM(data, null);
-
-			Log.d(TAG, "DOM Parsed printing results");
-
-			NodeList nl = dom.getElementsByTagName("a");
-
-			for(int i = 0; i < nl.getLength(); ++i)
-			{
-				Element a = (Element)nl.item(i);
-				Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
-
-				if(a.getAttribute("class").equals("forum")) {
-                    mForumTitleList.add(((Text)a.getFirstChild()).getData());
-				}
-			}
-
-            mForumList.setAdapter(new ForumsListAdapter(SABrowserActivity.this, mForumTitleList));
-		} catch (DOMException e) {
-			e.printStackTrace();
-		} catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-		}
+        mLoadingDialog = ProgressDialog.show(SABrowserActivity.this, "Loading", "Fetching list of forums...", true);
+        // mHandler.post(fetchForumsList);
+        new PreloadThread(mHandler).start();
     }
 
     private class ForumsListAdapter extends BaseAdapter {
@@ -122,6 +106,132 @@ public class SABrowserActivity extends Activity
 
         public long getItemId(int aPosition) {
             return aPosition;
+        }
+    }
+
+    private Runnable fetchForumsList = new Runnable() {
+        public void run() {
+
+            Message msgResponse = Message.obtain();
+            msgResponse.setTarget(mHandler);
+
+            String websiteData = null;
+
+            try {
+                DefaultHttpClient client = new DefaultHttpClient();
+                URI uri = new URI("http://forums.somethingawful.com/");
+                HttpGet method = new HttpGet(uri);
+                HttpResponse res = client.execute(method);
+                Log.d(TAG, "Created Objects, Now Creating Stream");
+                InputStream data = res.getEntity().getContent();
+
+                Log.d(TAG, "Create Tidy");
+                Tidy tidy = new Tidy();
+                Log.d(TAG, "Parse DOM");
+
+                Document dom = tidy.parseDOM(data, null);
+
+                Log.d(TAG, "DOM Parsed printing results");
+
+                NodeList nl = dom.getElementsByTagName("a");
+
+                for(int i = 0; i < nl.getLength(); ++i)
+                {
+                    Element a = (Element)nl.item(i);
+                    Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
+
+                    if(a.getAttribute("class").equals("forum")) {
+                        mForumTitleList.add(((Text)a.getFirstChild()).getData());
+                    }
+                }
+
+                msgResponse.what = FORUM_LIST_RETURNED;
+
+            } catch (DOMException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (IOException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (Exception e) {
+                Log.i(TAG, e.toString());
+                msgResponse.what = ERROR;
+            }
+
+            msgResponse.sendToTarget();
+        }
+    };
+
+    private class PreloadThread extends Thread {
+
+        Handler mHandler;
+
+        PreloadThread(Handler aHandler) {
+
+            mHandler = aHandler;
+        }
+
+        public void run() {
+
+            Message msgResponse = Message.obtain();
+            msgResponse.setTarget(mHandler);
+
+            String websiteData = null;
+
+            try {
+                DefaultHttpClient client = new DefaultHttpClient();
+                URI uri = new URI("http://forums.somethingawful.com/");
+                HttpGet method = new HttpGet(uri);
+                HttpResponse res = client.execute(method);
+                Log.d(TAG, "Created Objects, Now Creating Stream");
+                InputStream data = res.getEntity().getContent();
+
+                Log.d(TAG, "Create Tidy");
+                Tidy tidy = new Tidy();
+                Log.d(TAG, "Parse DOM");
+
+                Document dom = tidy.parseDOM(data, null);
+
+                Log.d(TAG, "DOM Parsed printing results");
+
+                NodeList nl = dom.getElementsByTagName("a");
+
+                for(int i = 0; i < nl.getLength(); ++i)
+                {
+                    Element a = (Element)nl.item(i);
+                    Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
+
+                    if(a.getAttribute("class").equals("forum")) {
+                        mForumTitleList.add(((Text)a.getFirstChild()).getData());
+                    }
+                }
+
+                msgResponse.what = FORUM_LIST_RETURNED;
+
+            } catch (DOMException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (ClientProtocolException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (IOException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (URISyntaxException e) {
+                e.printStackTrace();
+                msgResponse.what = ERROR;
+            } catch (Exception e) {
+                Log.i(TAG, e.toString());
+                msgResponse.what = ERROR;
+            }
+
+            msgResponse.sendToTarget();
         }
     }
 }
