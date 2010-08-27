@@ -25,7 +25,7 @@ public class ThreadActivity extends Activity
     private static final int THREAD_LIST_RETURNED = 1;
     private static final int ERROR = -1;
 
-    private ArrayList<String> mThreadTitleList;
+    private ArrayList<SAThread> mThreadTitleList;
     private Handler mHandler;
     private ListView mForumList;
     private ProgressDialog mLoadingDialog;
@@ -43,7 +43,7 @@ public class ThreadActivity extends Activity
 		url = "http://forums.somethingawful.com/" + getIntent().getStringExtra("url");
 
         mForumList = (ListView) findViewById(R.id.forum_list);
-        mThreadTitleList = new ArrayList<String>();
+        mThreadTitleList = new ArrayList<SAThread>();
 
         mHandler = new Handler() {
             public void handleMessage(Message aMessage) {
@@ -65,10 +65,10 @@ public class ThreadActivity extends Activity
     }
 
     private class ThreadListAdapter extends BaseAdapter {
-        private ArrayList<String> mItems;
+        private ArrayList<SAThread> mItems;
         private LayoutInflater mInflater;
 
-        public ThreadListAdapter(Context aContext, ArrayList<String> aItems) {
+        public ThreadListAdapter(Context aContext, ArrayList<SAThread> aItems) {
             mItems = aItems;
             mInflater = LayoutInflater.from(aContext);
         }
@@ -84,7 +84,7 @@ public class ThreadActivity extends Activity
             }
 
             TextView title = (TextView) forumItem.findViewById(R.id.thread_name);
-            title.setText(mItems.get(aPosition));
+            title.setText(mItems.get(aPosition).title);
 
             return forumItem;
         }
@@ -131,7 +131,7 @@ public class ThreadActivity extends Activity
 
                     if(a.getAttribute("class").equals("thread_title")) {
 	                    Log.d(TAG, "Item: " + ((Text)a.getFirstChild()).getData() );
-                        mThreadTitleList.add(((Text)a.getFirstChild()).getData());
+                        mThreadTitleList.add(new SAThread(((Text)a.getFirstChild()).getData(), a.getAttribute("href")));
                     }
                 }
 				Log.d(TAG, "Somethings not working fucker");
