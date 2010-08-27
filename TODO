@@ -1,0 +1,30 @@
+TODO
+
+v0.0.2
+Return to sender when no SubForums are found
+
+v0.0.3
+Get Thread posts loading in a listview
+
+v0.0.4
+Page Navigation buttons on both Thread and Post Activities
+
+v0.0.5
+Menu for login, settings, refresh, etc
+
+v0.0.6
+Login, persistant session using HttpRequest as an Application
+
+
+
+
+
+FUTURE:
+
+Search Provider?
+Custom Styling
+Quick Contact PMing
+PM
+Cache
+
+
