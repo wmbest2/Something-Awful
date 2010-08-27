@@ -15,19 +15,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.content.Intent;
-import org.apache.http.impl.client.DefaultHttpClient;
-import java.net.URI;
-import java.net.URISyntaxException;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.HttpResponse;
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.IOException;
 import android.util.Log;
 import org.w3c.dom.*;
-import org.htmlcleaner.*;
 
 import java.util.ArrayList;
 
@@ -42,6 +31,7 @@ public class SABrowserActivity extends Activity
     private Handler mHandler;
     private ListView mForumList;
     private ProgressDialog mLoadingDialog;
+	private String url;
 
     /** Called when the activity is first created. */
     @Override
@@ -50,6 +40,8 @@ public class SABrowserActivity extends Activity
 		Log.d(TAG, "Entered onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
+
+		url = "http://forums.somethingawful.com/";
 
         mForumList = (ListView) findViewById(R.id.forum_list);
         mForumTitleList = new ArrayList<SAForum>();
@@ -67,6 +59,15 @@ public class SABrowserActivity extends Activity
 								Intent intent = new Intent(SABrowserActivity.this, ThreadActivity.class);
 								intent.putExtra("url", ((SAForum)parent.getAdapter().getItem(position)).url);
 								SABrowserActivity.this.startActivity(intent);
+							}
+						});
+   						mForumList.setOnItemLongClickListener( new OnItemLongClickListener() {
+							@Override
+							public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+								Intent intent = new Intent(SABrowserActivity.this, SubForumActivity.class);
+								intent.putExtra("url", ((SAForum)parent.getAdapter().getItem(position)).url);
+								SABrowserActivity.this.startActivity(intent);
+								return true;
 							}
 						});
                         break;
@@ -137,23 +138,10 @@ public class SABrowserActivity extends Activity
             String websiteData = null;
 
             try {
-                DefaultHttpClient client = new DefaultHttpClient();
-                URI uri = new URI("http://forums.somethingawful.com/");
-                HttpGet method = new HttpGet(uri);
-                HttpResponse res = client.execute(method);
-                Log.d(TAG, "Created Objects, Now Creating Stream");
-                InputStream data = res.getEntity().getContent();
+               
+				SAHttpRequest http = new SAHttpRequest();
 
-                Log.d(TAG, "Create HTML Cleaner");
-                HtmlCleaner hc = new HtmlCleaner();
-
-				CleanerProperties props = hc.getProperties();
-
-				DomSerializer ds = new DomSerializer(props, true);
-								
-                Log.d(TAG, "Parse DOM");
-
-                Document dom = ds.createDOM(hc.clean(data));
+				Document dom = http.httpGet(url);
 
                 Log.d(TAG, "DOM Parsed printing results");
 
@@ -174,16 +162,7 @@ public class SABrowserActivity extends Activity
             } catch (DOMException e) {
                 e.printStackTrace();
                 msgResponse.what = ERROR;
-            } catch (ClientProtocolException e) {
-                e.printStackTrace();
-                msgResponse.what = ERROR;
-            } catch (IOException e) {
-                e.printStackTrace();
-                msgResponse.what = ERROR;
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-                msgResponse.what = ERROR;
-            } catch (Exception e) {
+			} catch (Exception e) {
                 Log.i(TAG, e.toString());
                 msgResponse.what = ERROR;
             }

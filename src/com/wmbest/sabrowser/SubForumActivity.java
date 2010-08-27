@@ -9,23 +9,26 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.content.Context;
 import android.widget.BaseAdapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.*;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.util.Log;
+import android.content.Intent;
 import org.w3c.dom.*;
 
 
 import java.util.ArrayList;
 
-public class ThreadActivity extends Activity
+public class SubForumActivity extends Activity
 {
 
-	private static final String TAG = "ThreadActivity";
-    private static final int THREAD_LIST_RETURNED = 1;
+	private static final String TAG = "SubForumActivity";
+    private static final int SUBFORUM_LIST_RETURNED = 1;
     private static final int ERROR = -1;
 
-    private ArrayList<String> mThreadTitleList;
+    private ArrayList<SAForum> mSubForumTitleList;
     private Handler mHandler;
     private ListView mForumList;
     private ProgressDialog mLoadingDialog;
@@ -43,15 +46,33 @@ public class ThreadActivity extends Activity
 		url = "http://forums.somethingawful.com/" + getIntent().getStringExtra("url");
 
         mForumList = (ListView) findViewById(R.id.forum_list);
-        mThreadTitleList = new ArrayList<String>();
+        mSubForumTitleList = new ArrayList<SAForum>();
 
         mHandler = new Handler() {
             public void handleMessage(Message aMessage) {
                 mLoadingDialog.dismiss();
 
                 switch(aMessage.what) {
-                    case THREAD_LIST_RETURNED:
-                        mForumList.setAdapter(new ThreadListAdapter(ThreadActivity.this, mThreadTitleList));
+                    case SUBFORUM_LIST_RETURNED:
+                        mForumList.setAdapter(new SubForumListAdapter(SubForumActivity.this, mSubForumTitleList));
+						mForumList.setOnItemClickListener( new OnItemClickListener() {
+							@Override
+							public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+								Intent intent = new Intent(SubForumActivity.this, ThreadActivity.class);
+								intent.putExtra("url", ((SAForum)parent.getAdapter().getItem(position)).url);
+								SubForumActivity.this.startActivity(intent);
+							}
+						});
+   						mForumList.setOnItemLongClickListener( new OnItemLongClickListener() {
+							@Override
+							public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+								Intent intent = new Intent(SubForumActivity.this, SubForumActivity.class);
+								intent.putExtra("url", ((SAForum)parent.getAdapter().getItem(position)).url);
+								Log.d(TAG, intent.getStringExtra("url"));
+								SubForumActivity.this.startActivity(intent);
+								return true;
+							}
+						});
                         break;
                     case ERROR:
                         Log.e(TAG, "ERRORRRRR");
@@ -60,15 +81,15 @@ public class ThreadActivity extends Activity
             }
         };
 
-        mLoadingDialog = ProgressDialog.show(ThreadActivity.this, "Loading", "Fetching Threads...", true);
+        mLoadingDialog = ProgressDialog.show(SubForumActivity.this, "Loading", "Fetching SubForums...", true);
         new PreloadThread(mHandler).start();
     }
 
-    private class ThreadListAdapter extends BaseAdapter {
-        private ArrayList<String> mItems;
+    private class SubForumListAdapter extends BaseAdapter {
+        private ArrayList<SAForum> mItems;
         private LayoutInflater mInflater;
 
-        public ThreadListAdapter(Context aContext, ArrayList<String> aItems) {
+        public SubForumListAdapter(Context aContext, ArrayList<SAForum> aItems) {
             mItems = aItems;
             mInflater = LayoutInflater.from(aContext);
         }
@@ -78,13 +99,13 @@ public class ThreadActivity extends Activity
 
             // Recycle old View's if the list is long
             if (aConvertView == null) {
-                forumItem = mInflater.inflate(R.layout.thread_list_item, null);
+                forumItem = mInflater.inflate(R.layout.subforum_list_item, null);
             } else {
                 forumItem = aConvertView;
             }
 
-            TextView title = (TextView) forumItem.findViewById(R.id.thread_name);
-            title.setText(mItems.get(aPosition));
+            TextView title = (TextView) forumItem.findViewById(R.id.subforum_name);
+            title.setText(mItems.get(aPosition).title);
 
             return forumItem;
         }
@@ -123,19 +144,20 @@ public class ThreadActivity extends Activity
                 Document dom = http.httpGet(url);
                 Log.d(TAG, "DOM Parsed printing results");
 
-                NodeList nl = dom.getElementsByTagName("a");
+                NodeList nl = dom.getElementsByTagName("tr");
 
                 for(int i = 0; i < nl.getLength(); ++i)
                 {
-                    Element a = (Element)nl.item(i);
+                    Element tr = (Element)nl.item(i);
 
-                    if(a.getAttribute("class").equals("thread_title")) {
-	                    Log.d(TAG, "Item: " + ((Text)a.getFirstChild()).getData() );
-                        mThreadTitleList.add(((Text)a.getFirstChild()).getData());
+                    if(tr.getAttribute("class").equals("subforum")) {
+	                   NodeList sublist = tr.getElementsByTagName("a");
+					   Element a = (Element)sublist.item(0);
+		               mSubForumTitleList.add(new SAForum(((Text)a.getFirstChild()).getData(), a.getAttribute("href")));	   
                     }
                 }
 				Log.d(TAG, "Somethings not working fucker");
-                msgResponse.what = THREAD_LIST_RETURNED;
+                msgResponse.what = SUBFORUM_LIST_RETURNED;
 
             } catch (DOMException e) {
                 e.printStackTrace();

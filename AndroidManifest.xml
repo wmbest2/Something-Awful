@@ -12,6 +12,7 @@
             </intent-filter>
 		</activity>
 		<activity android:name="ThreadActivity" />
+		<activity android:name="SubForumActivity" />
 	</application>
 	<uses-permission android:name="android.permission.INTERNET" />
 </manifest> 
