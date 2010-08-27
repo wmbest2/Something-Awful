@@ -15,6 +15,8 @@ Menu for login, settings, refresh, etc
 v0.0.6
 Login, persistant session using HttpRequest as an Application
 
+Login information is sent to account.php.  Put variables are action:login, username: (username), password: (plaintext password)
+
 
 
 
