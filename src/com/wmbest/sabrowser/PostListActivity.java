@@ -14,20 +14,21 @@ import android.widget.AdapterView.*;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.content.Intent;
 import android.util.Log;
+import android.content.Intent;
 import org.w3c.dom.*;
+
 
 import java.util.ArrayList;
 
-public class SABrowserActivity extends Activity
+public class PostListActivity extends Activity
 {
 
-	private static final String TAG = "SABrowserActivity";
-    private static final int FORUM_LIST_RETURNED = 1;
+	private static final String TAG = "PostListActivity";
+    private static final int POST_LIST_RETURNED = 1;
     private static final int ERROR = -1;
 
-    private ArrayList<SAForum> mForumTitleList;
+    private ArrayList<SAPost> mPostList;
     private Handler mHandler;
     private ListView mForumList;
     private ProgressDialog mLoadingDialog;
@@ -41,35 +42,19 @@ public class SABrowserActivity extends Activity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
-		url = "http://forums.somethingawful.com/";
+
+		url = "http://forums.somethingawful.com/" + getIntent().getStringExtra("url");
 
         mForumList = (ListView) findViewById(R.id.forum_list);
-        mForumTitleList = new ArrayList<SAForum>();
+        mPostList = new ArrayList<SAPost>();
 
         mHandler = new Handler() {
             public void handleMessage(Message aMessage) {
                 mLoadingDialog.dismiss();
 
                 switch(aMessage.what) {
-                    case FORUM_LIST_RETURNED:
-                        mForumList.setAdapter(new ForumsListAdapter(SABrowserActivity.this, mForumTitleList));
-						mForumList.setOnItemClickListener( new OnItemClickListener() {
-							@Override
-							public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-								Intent intent = new Intent(SABrowserActivity.this, ThreadActivity.class);
-								intent.putExtra("url", ((SAForum)parent.getAdapter().getItem(position)).url);
-								SABrowserActivity.this.startActivity(intent);
-							}
-						});
-   						mForumList.setOnItemLongClickListener( new OnItemLongClickListener() {
-							@Override
-							public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-								Intent intent = new Intent(SABrowserActivity.this, SubForumActivity.class);
-								intent.putExtra("url", ((SAForum)parent.getAdapter().getItem(position)).url);
-								SABrowserActivity.this.startActivity(intent);
-								return true;
-							}
-						});
+                    case POST_LIST_RETURNED:
+                        mForumList.setAdapter(new PostListAdapter(PostListActivity.this, mPostList));
                         break;
                     case ERROR:
                         Log.e(TAG, "ERRORRRRR");
@@ -78,15 +63,15 @@ public class SABrowserActivity extends Activity
             }
         };
 
-        mLoadingDialog = ProgressDialog.show(SABrowserActivity.this, "Loading", "Fetching list of forums...", true);
+        mLoadingDialog = ProgressDialog.show(PostListActivity.this, "Loading", "Fetching Posts...", true);
         new PreloadThread(mHandler).start();
     }
 
-    private class ForumsListAdapter extends BaseAdapter {
-        private ArrayList<SAForum> mItems;
+    private class PostListAdapter extends BaseAdapter {
+        private ArrayList<SAPost> mItems;
         private LayoutInflater mInflater;
 
-        public ForumsListAdapter(Context aContext, ArrayList<SAForum> aItems) {
+        public PostListAdapter(Context aContext, ArrayList<SAPost> aItems) {
             mItems = aItems;
             mInflater = LayoutInflater.from(aContext);
         }
@@ -96,20 +81,25 @@ public class SABrowserActivity extends Activity
 
             // Recycle old View's if the list is long
             if (aConvertView == null) {
-                forumItem = mInflater.inflate(R.layout.forum_list_item, null);
+                forumItem = mInflater.inflate(R.layout.post_list_item, null);
             } else {
                 forumItem = aConvertView;
             }
 
-            TextView title = (TextView) forumItem.findViewById(R.id.forum_name);
-            title.setText(mItems.get(aPosition).title);
+            TextView content = (TextView) forumItem.findViewById(R.id.post_content);
+            content.setText(mItems.get(aPosition).content);
+
+            TextView poster = (TextView) forumItem.findViewById(R.id.post_poster);
+            poster.setText(mItems.get(aPosition).poster);
+
+            TextView date = (TextView) forumItem.findViewById(R.id.post_date);
+            date.setText(mItems.get(aPosition).date);
 
             return forumItem;
         }
 
         public int getCount() {
             return mItems.size();
-			
         }
 
         public Object getItem(int aPosition) {
@@ -138,31 +128,51 @@ public class SABrowserActivity extends Activity
             String websiteData = null;
 
             try {
-               
-				SAHttpRequest http = new SAHttpRequest();
-
-				Document dom = http.httpGet(url);
-
+                SAHttpRequest http = new SAHttpRequest();
+                Document dom = http.httpGet(url);
                 Log.d(TAG, "DOM Parsed printing results");
 
-                NodeList nl = dom.getElementsByTagName("a");
+                NodeList nl = dom.getElementsByTagName("table");
 
-                for(int i = 0; i < nl.getLength(); ++i)
-                {
-                    Element a = (Element)nl.item(i);
-                    Log.d(TAG, "Item: " + a.getFirstChild().getNodeName() );
+                for(int i = 0; i < nl.getLength(); ++i) {
+                    Element table = (Element)nl.item(i);
+					String body = "";
+					String poster = "";
+                    if(table.getAttribute("class").equals("post")) {
+	                   NodeList tdlist = table.getElementsByTagName("td");
 
-                    if(a.getAttribute("class").equals("forum")) {
-                        mForumTitleList.add(new SAForum(((Text)a.getFirstChild()).getData(), a.getAttribute("href")));
+					   for(int j = 0; j < tdlist.getLength(); ++j) {
+						   Element td = (Element)tdlist.item(j);
+						  
+						   if(td.getAttribute("class").equals("postbody")) {  		//Get Post Body
+								
+								NodeList bodylist = td.getChildNodes();
+								for(int k = 0; k < bodylist.getLength(); ++k)
+								{
+									if(bodylist.item(k).getNodeName().equals("#text")) {
+										Log.d(TAG, bodylist.item(k).getNodeValue());
+										body = body + ((Text)bodylist.item(k)).getData() + "\n";
+									}
+								}
+						   } else if (td.getAttribute("class").equals("postdate")) { //Get PostDate
+
+						   } else { 												//Get Poster
+
+						   }
+					   }
+					   mPostList.add(new SAPost(body, "TEST", "TEST"));
+
+					   
+
                     }
                 }
-
-                msgResponse.what = FORUM_LIST_RETURNED;
+				Log.d(TAG, "Somethings not working fucker");
+                msgResponse.what = POST_LIST_RETURNED;
 
             } catch (DOMException e) {
                 e.printStackTrace();
                 msgResponse.what = ERROR;
-			} catch (Exception e) {
+            } catch (Exception e) {
                 Log.i(TAG, e.toString());
                 msgResponse.what = ERROR;
             }

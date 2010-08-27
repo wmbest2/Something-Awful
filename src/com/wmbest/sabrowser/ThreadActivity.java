@@ -8,7 +8,10 @@ import android.os.Message;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.content.Context;
+import android.content.Intent;
 import android.widget.BaseAdapter;
+import android.widget.AdapterView;
+import android.widget.AdapterView.*;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -52,6 +55,14 @@ public class ThreadActivity extends Activity
                 switch(aMessage.what) {
                     case THREAD_LIST_RETURNED:
                         mForumList.setAdapter(new ThreadListAdapter(ThreadActivity.this, mThreadTitleList));
+						mForumList.setOnItemClickListener( new OnItemClickListener() {
+						@Override
+						public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+							Intent intent = new Intent(ThreadActivity.this, PostListActivity.class);
+							intent.putExtra("url", ((SAThread)parent.getAdapter().getItem(position)).url);
+							ThreadActivity.this.startActivity(intent);
+						}
+						});
                         break;
                     case ERROR:
                         Log.e(TAG, "ERRORRRRR");
