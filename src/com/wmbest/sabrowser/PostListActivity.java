@@ -149,11 +149,14 @@ public class PostListActivity extends Activity
 								NodeList bodylist = td.getChildNodes();
 								for(int k = 0; k < bodylist.getLength(); ++k)
 								{
-									if(bodylist.item(k).getNodeName().equals("#text")) {
+									String name = bodylist.item(k).getNodeName();
+									if(name.equals("#text")) {
 										if(!bodylist.item(k).getNodeValue().equals("\n")) {
-											Log.d(TAG,  "Line: \"" + bodylist.item(k).getNodeValue() + "\"");
-											body = body + ((Text)bodylist.item(k)).getData() + "\n";
+											//Log.d(TAG,  "Line: \"" + bodylist.item(k).getNodeValue() + "\"");
+											body = body + ((Text)bodylist.item(k)).getData().replace("\t","").replace("\n","");
 										}
+									} else if (name.equals("br")) {
+										body = body + "\n";
 									}
 								}
 						   } else if (td.getAttribute("class").equals("postdate")) { //Get PostDate
