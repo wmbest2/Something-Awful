@@ -150,8 +150,10 @@ public class PostListActivity extends Activity
 								for(int k = 0; k < bodylist.getLength(); ++k)
 								{
 									if(bodylist.item(k).getNodeName().equals("#text")) {
-										Log.d(TAG, bodylist.item(k).getNodeValue());
-										body = body + ((Text)bodylist.item(k)).getData() + "\n";
+										if(!bodylist.item(k).getNodeValue().equals("\n")) {
+											Log.d(TAG,  "Line: \"" + bodylist.item(k).getNodeValue() + "\"");
+											body = body + ((Text)bodylist.item(k)).getData() + "\n";
+										}
 									}
 								}
 						   } else if (td.getAttribute("class").equals("postdate")) { //Get PostDate
